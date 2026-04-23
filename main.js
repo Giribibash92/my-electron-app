@@ -1,35 +1,93 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const fs = require('fs');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+app.disableHardwareAcceleration();
 
-let filePath;
+const path = require('node:path');
+const fs = require('node:fs');
 
 function createWindow() {
     const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-        preload: path.join(__dirname, 'preload.js')
-    }
+        width: 900,
+        height: 600,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false
+        }
     });
 
     win.loadFile('index.html');
-
-    filePath = path.join(app.getPath('documents'), 'note.txt');
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    creationWinow();
 
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().Length === 0) createWindow();
+    });
+});
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+});
+
+// IPC Handlers
+ipcMain.handle('save-note', async (event, text) => {
+    const filePath = path.join(app.getPath('documents'), 'quicknote.txt');
+    fs.writeFileSync(filePath, text, 'utf-8');
+    return { success: true };
+});
+
+ipcMain.handle('delete-note', async () => {
+    const filePath = path.join(app.getPath('documents'), 'quick-note.txt');
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath); // delete the file
+    }
+    return { success: true };
+});
 // Save note
 ipcMain.handle('save-note', async (event, data) => {
     fs.writeFileSync(filePath, data);
     return "Saved";
 });
 
+// result.response === 0 means user clicked 'Discard Changes'
+return { confirmed: result.response === 0 };
+
 // Load note
 ipcMain.handle('load-note', async () => {
+    const filePath = path.join(app.getPath('documents'), 'quicknote.txt');
     if (fs.existsSync(filePath)) {
-    return fs.readFileSync(filePath, 'utf-8');
+        return fs.readFileSync(filePath, 'utf-8');
     }
     return "";
 });
+
+// NEW: Save As handler
+ipcMain.handle('save-as', async (event, text) => {
+    const result = await dialog.showSaveDialog({
+        defaultPath: 'mynote.txt',
+        filters: [{ name: 'Text Files', extensions: ['txt'] }]
+    });
+
+    if (result.canceled) {
+        return { success: false };
+    }
+
+    fs.writeFileSync(result.filePath, text, 'utf-8');
+    return { success: true, filePath: result.filePath };
+});
+
+// NEW: New Note handler
+ipcMain.handle('new-note', async (event) => {
+    const result = await dialog.showMessageBox({
+        type: 'warning',
+        buttons: ['Discard Changes', 'Cancel'],
+        defaultId: 1,
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Start a new note anyway?'
+    });
+
+    // result.response === 0 means user clicked 'Discard Changes'
+    return { confirmed: result.response === 0 };
+});
+
