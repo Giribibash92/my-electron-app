@@ -1,0 +1,13 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.bibashgiri.quicknotetaker
+productName: Quick Note Taker
+win:
+  target: nsis
+  icon: electron(1).ico
+mac:
+  target: dmg
+  icon: electron(1).ico
+files: []
+electronVersion: 42.4.0
