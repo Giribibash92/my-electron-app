@@ -2,43 +2,237 @@
 <html>
 
 <head>
-    <title>Quick Note taker</title>
+    <meta charset="UTF-8">
+    <title>Quick Note Taker</title>
+
     <style>
-        body {
-            font-family: system-ui;
-            padding: 20px;
-            background: #f4f4f4;
-        }
 
-        textarea {
-            width: 95%;
-            height: 60vh;
-            font-size: 18px;
-            padding: 15px;
-        }
 
-        button {
-            padding: 12px 30px;
-            font-size: 18px;
-            background: #316357;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-    </style>
+        :root {
+  --bg-primary: #f4f4f4;
+  --bg-sidebar: #2b2b2b;
+  --bg-editor: #ffffff;
+  --text-primary: #000000;
+  --text-sidebar: #ffffff;
+  --text-muted: #999999;
+  --border-color: #cccccc;
+  --button-bg: #316357;
+  --button-hover: #3d7a6b;
+}
+
+body.dark-mode {
+  --bg-primary: #1e1e1e;
+  --bg-sidebar: #141414;
+  --bg-editor: #252525;
+  --text-primary: #f0f0f0;
+  --text-sidebar: #dddddd;
+  --text-muted: #777777;
+  --border-color: #444444;
+  --button-bg: #316357;
+  --button-hover: #3d7a6b;
+}
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui;
+    background: var(--bg-primary);
+    height: 100vh;
+}
+
+#app {
+    display: flex;
+    height: 100vh;
+}
+
+#sidebar {
+    width: 220px;
+    background:  var(--bg-sidebar);
+    color: var(--text-sidebar);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 8px;
+}
+
+#note-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 10px;
+    background: var(--bg-editor);
+}
+
+#note-title {
+    font-size: 18px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-editor);
+    color: var(--text-primary);
+}
+#search {
+    padding: 7px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-note-item);
+    color: var(--text-sidebar);
+    font-size: 13px;
+    width: 100%;
+}
+
+
+textarea {
+    flex: 1;
+    font-size: 16px;
+    padding: 12px;
+    resize: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+#toolbar {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    padding: 8px 12px;
+    font-size: 14px;
+    background: #316357;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+button:hover {
+    background: #3d7a6b;
+}
+
+#new-note {
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.note-item {
+    background: var(--bg-note-item);
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.note-item:hover {
+    background: var(--bg-note-item-hover);
+}
+
+.note-item.active {
+    background: var(--bg-note-item-active);
+}
+
+.note-item-title {
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.note-item-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.note-item-delete {
+    background: transparent;
+    color: #ff6b6b;
+    border: none;
+    font-size: 12px;
+    float: right;
+    padding: 0;
+    cursor: pointer;
+}
+
+#save_status { font-size: 13px; color: var(--text-muted);}
+
+#word-count {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.note-item-pin {
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    float: right;
+    padding: 0;
+    cursor: pointer;
+    margin-right: 4px;
+}
+
+</style>
 </head>
-
 <body>
 
-    <h1>📓Quick Note Taker</h1>
-    <textarea id="note" placeholder="Start typing your note..."></textarea>
-    <br><br>
-    <button id="save">💾Save Note</button>
-    <button id="save-as">📂 Save As</button>
-    <p id="save_status" style="color: gray; font-size: 14px;"></p>
-    <button id="deleteBtn" style="background: #f44336;"> Delete All</button>
-    <div id="status" style=" margin-top:10px; color: #666; font-size:0.9em;">
-        <script src="renderer.js"></script>
+    <div id="app">
+        <div id="sidebar">
+            <button id="new-note">📄 New Note</button>
+            <input type="text" id="search" placeholder=" Search notes...">
+            <input type="text" id="note-category" placeholder="Category">
+            <select id="category-filter">
+                <option value="">All Categories</option>
+            </select>
+            <div id="note-list"></div>
+        </div>
+
+        <div id="editor">
+
+            <input
+                type="text"
+                id="note-title"
+                placeholder="Note title..."
+            >
+
+            <textarea
+                id="note"
+                placeholder="Start typing your note..."
+            ></textarea>
+
+            <div id="toolbar">
+                <button id="save">💾 Save</button>
+                <button id="save-as">📁 Save As</button>
+                <button id="open-file">📂 Open File</button>
+                <button id="recent-files">Recent Files</button>
+                <button id="statistics">📊 Statistics</button>  
+                <button id="deleteBtn">🗑 Delete</button>
+                <button id="export-pdf">📄 Export PDF</button>
+                <button id="font-increase">A+</button>
+                <button id="font-decrease">A-</button>
+                <button id="dark-mode-toggle">🌙 Dark Mode</button>
+            </div>
+            <p id="save_status"></p>
+            <p id="word-count">Words: 0 | Characters: 0</p>
+
+        </div>
+
+    </div>
+
+    <script src="renderer.js"></script>
+
 </body>
+
 
 </html>
